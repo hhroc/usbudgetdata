@@ -33,27 +33,41 @@ def writedb(columns,data,outputfile):
     con = sqlite3.connect(outputfile)
     cur = con.cursor()
 
+    print "Creating table ..."
+
     # create the table
-    query = "CREATE TABLE data(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    query = "CREATE TABLE data(id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
     for column in columns:
         name,isnum = column
+        name = name.replace(' ','_').replace('-','')
+        if name.isdigit():
+            name = "Year_{0}".format(name)
         t = "TEXT"
         if isnum:
             t = "INT"
-        query += "{0} {1},".format(name,t)
+        query += "{0} {1},\n".format(name,t)
+    query = query[:-2]
     query += ")"
+    #print query
     cur.execute(query)
 
+    print "Loading {0} rows of data ...".format(len(data))
+
     # load the data
-    query = "INSERT INTO data VALUES("
     i = 0
     for row in data:
+        query = "INSERT INTO data VALUES("
         if not i == 0:
             for col in row:
+                if not col.isdigit():
+                    col = '"{0}"'.format(col)
                 query += "{0},".format(col)
-    query = query[:-1] # last coma
-    query += ")"
-    cur.execute(query)
+        i += 1
+        query = query[:-1] # last coma
+        query += ")"
+        #print query
+        cur.execute(query)
+        print "Done with {0}".format(i)
     
     cur.close()
     con.close()
