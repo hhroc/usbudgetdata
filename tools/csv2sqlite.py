@@ -14,12 +14,12 @@ def readfile(infilename):
                 r.append(col)
             data.append(r)
         i += 1
-    #print i
+    print i
     return data
 
 def readcolumns(data):
     columns = []
-    #print data[1]
+    print data[1]
     for i in range(0,len(data[0])):
         name = data[0][i]
         if data[1][i].replace('-','').isdigit():
@@ -31,46 +31,50 @@ def readcolumns(data):
 
 def writedb(columns,data,outputfile):
     con = sqlite3.connect(outputfile)
-    cur = con.cursor()
 
-    print "Creating table ..."
+    with con:
 
-    # create the table
-    query = "CREATE TABLE data(id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    for column in columns:
-        name,isnum = column
-        name = name.replace(' ','_').replace('-','')
-        if name.isdigit():
-            name = "Year_{0}".format(name)
-        t = "TEXT"
-        if isnum:
-            t = "INT"
-        query += "{0} {1},\n".format(name,t)
-    query = query[:-2]
-    query += ")"
-    #print query
-    cur.execute(query)
+        cur = con.cursor()
 
-    print "Loading {0} rows of data ...".format(len(data))
+        print "Creating table ..."
 
-    # load the data
-    i = 0
-    for row in data:
-        query = "INSERT INTO data VALUES("
-        if not i == 0:
-            for col in row:
-                if not col.isdigit():
-                    col = '"{0}"'.format(col)
-                query += "{0},".format(col)
-        i += 1
-        query = query[:-1] # last coma
+        # create the table
+        query = "CREATE TABLE data(" #id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        for column in columns:
+            name,isnum = column
+            name = name.replace(' ','_').replace('-','')
+            if name.isdigit():
+                name = "Year_{0}".format(name)
+            t = "TEXT"
+            if isnum:
+                t = "INT"
+            query += "{0} {1},\n".format(name,t)
+        query = query[:-2]
         query += ")"
-        #print query
         cur.execute(query)
-        print "Done with {0}".format(i)
+
+        print "Loading {0} rows of data ...".format(len(data))
+
+        # load the data
+        i = 0
+        for row in data:
+            query = "INSERT INTO data VALUES("
+            if not i == 0:
+                for col in row:
+                    if not col.isdigit():
+                        col = col.replace("'","''")
+                        col = "'{0}'".format(col)
+                    query += "{0},".format(col)
+                query = query[:-1] # last coma
+                query += ")"
+                print query
+                cur.execute(query)
+            i += 1
     
-    cur.close()
+        cur.close()
     con.close()
+
+    print "Data loaded into database."
 
     return con
 
